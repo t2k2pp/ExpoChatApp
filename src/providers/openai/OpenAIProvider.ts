@@ -97,10 +97,38 @@ export class OpenAIProvider extends AIProvider {
 
     async validateConnection(): Promise<boolean> {
         try {
-            const response = await this.client.get('/models');
+            // Validate URL format first
+            try {
+                new URL(this.config.baseUrl);
+            } catch (urlError) {
+                console.error('Invalid URL format:', this.config.baseUrl);
+                return false;
+            }
+
+            // Must start with http:// or https://
+            if (!this.config.baseUrl.startsWith('http://') && !this.config.baseUrl.startsWith('https://')) {
+                console.error('URL must start with http:// or https://');
+                return false;
+            }
+
+            console.log('Attempting to connect to:', this.config.baseUrl);
+            const response = await this.client.get('/models', {
+                timeout: 10000, // 10 second timeout
+                validateStatus: (status) => status === 200, // Only 200 is success
+            });
+
+            console.log('Connection response status:', response.status);
             return response.status === 200;
         } catch (error) {
-            console.error('Connection validation failed:', error);
+            if (axios.isAxiosError(error)) {
+                console.error('Connection validation failed:', {
+                    message: error.message,
+                    code: error.code,
+                    response: error.response?.status,
+                });
+            } else {
+                console.error('Connection validation failed:', error);
+            }
             return false;
         }
     }

@@ -11,6 +11,8 @@ import {
     StyleSheet,
     Alert,
     Switch,
+    Platform,
+    TouchableOpacity,
 } from 'react-native';
 import { Button, Input } from '../components/common';
 import { StorageService } from '../services';
@@ -25,6 +27,9 @@ export const SettingsScreen: React.FC = () => {
     const [temperature, setTemperature] = useState('0.7');
     const [loading, setLoading] = useState(false);
     const [testResult, setTestResult] = useState<{ message: string; success: boolean } | null>(null);
+    const [availableModels, setAvailableModels] = useState<string[]>([]);
+    const [loadingModels, setLoadingModels] = useState(false);
+    const [showModelPicker, setShowModelPicker] = useState(false);
     const storageService = StorageService.getInstance();
 
     useEffect(() => {
@@ -187,6 +192,51 @@ export const SettingsScreen: React.FC = () => {
         }
     };
 
+    const handleLoadModels = async () => {
+        if (!baseUrl.trim()) {
+            setTestResult({ message: 'Please enter Base URL first', success: false });
+            return;
+        }
+
+        setLoadingModels(true);
+        setTestResult(null);
+
+        try {
+            const config: OpenAICompatibleConfig = {
+                type: 'openai-compatible',
+                baseUrl: baseUrl.trim(),
+                apiKey: apiKey.trim() || undefined,
+                model: model.trim() || 'temp', // Temporary model for API call
+                temperature: 0.7,
+            };
+
+            const provider = AIProviderFactory.createProvider(config);
+            const models = await provider.getAvailableModels();
+
+            if (models.length > 0) {
+                setAvailableModels(models);
+                setTestResult({
+                    message: `✓ Loaded ${models.length} model(s) from server`,
+                    success: true
+                });
+                console.log('Available models:', models);
+            } else {
+                setTestResult({
+                    message: '✗ No models found. Check server connection.',
+                    success: false
+                });
+            }
+        } catch (error) {
+            console.error('Failed to load models:', error);
+            setTestResult({
+                message: `✗ Failed to load models: ${(error as Error).message}`,
+                success: false
+            });
+        } finally {
+            setLoadingModels(false);
+        }
+    };
+
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <Text style={styles.sectionTitle}>System Prompt</Text>
@@ -219,13 +269,50 @@ export const SettingsScreen: React.FC = () => {
                 secureTextEntry
             />
 
-            <Input
-                label="Model"
-                value={model}
-                onChangeText={setModel}
-                placeholder="llama-3"
-                autoCapitalize="none"
-            />
+            <View style={styles.modelSection}>
+                <Text style={styles.label}>Model</Text>
+                <View style={styles.modelInputRow}>
+                    <Input
+                        value={model}
+                        onChangeText={setModel}
+                        placeholder="Select from list or type manually"
+                        autoCapitalize="none"
+                        style={styles.modelInput}
+                    />
+                    <Button
+                        title="Load Models"
+                        onPress={handleLoadModels}
+                        variant="secondary"
+                        loading={loadingModels}
+                        style={styles.loadModelsButton}
+                    />
+                </View>
+
+                {availableModels.length > 0 && (
+                    <View style={styles.modelListContainer}>
+                        <Text style={styles.modelListTitle}>Available Models ({availableModels.length}):</Text>
+                        <View style={styles.modelList}>
+                            {availableModels.map((modelName) => (
+                                <TouchableOpacity
+                                    key={modelName}
+                                    style={[
+                                        styles.modelItem,
+                                        model === modelName && styles.modelItemSelected
+                                    ]}
+                                    onPress={() => setModel(modelName)}
+                                >
+                                    <Text style={[
+                                        styles.modelItemText,
+                                        model === modelName && styles.modelItemTextSelected
+                                    ]}>
+                                        {modelName}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                )}
+            </View>
 
             <Input
                 label="Temperature (0-2)"
@@ -335,5 +422,62 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
         color: '#000',
+    },
+    modelSection: {
+        marginBottom: 16,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#000',
+        marginBottom: 8,
+    },
+    modelInputRow: {
+        flexDirection: 'row',
+        gap: 8,
+        alignItems: 'flex-start',
+    },
+    modelInput: {
+        flex: 1,
+    },
+    loadModelsButton: {
+        minWidth: 120,
+        marginTop: 0,
+    },
+    modelListContainer: {
+        marginTop: 12,
+        padding: 12,
+        backgroundColor: '#FFF',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#DDD',
+    },
+    modelListTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#666',
+        marginBottom: 8,
+    },
+    modelList: {
+        gap: 6,
+    },
+    modelItem: {
+        padding: 10,
+        backgroundColor: '#F5F5F5',
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    modelItemSelected: {
+        backgroundColor: '#E3F2FD',
+        borderColor: '#2196F3',
+    },
+    modelItemText: {
+        fontSize: 13,
+        color: '#333',
+    },
+    modelItemTextSelected: {
+        color: '#1976D2',
+        fontWeight: '600',
     },
 });
