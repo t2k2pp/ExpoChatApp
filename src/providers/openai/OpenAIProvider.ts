@@ -63,63 +63,33 @@ export class OpenAIProvider extends AIProvider {
         const formattedMessages = this.formatMessages(messages, systemPrompt);
 
         try {
-            const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(this.config.apiKey && {
-                        Authorization: `Bearer ${this.config.apiKey}`,
-                    }),
-                },
-                body: JSON.stringify({
-                    model: this.config.model,
-                    messages: formattedMessages,
-                    temperature: this.config.temperature ?? 0.7,
-                    max_tokens: this.config.maxTokens,
-                    stream: true,
-                }),
+            // React Native has limited ReadableStream support
+            // Fall back to non-streaming mode with simulated token delivery
+            const response = await this.client.post('/chat/completions', {
+                model: this.config.model,
+                messages: formattedMessages,
+                temperature: this.config.temperature ?? 0.7,
+                max_tokens: this.config.maxTokens,
+                stream: false,
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            const fullContent = response.data.choices[0].message.content;
 
-            const reader = response.body?.getReader();
-            if (!reader) {
-                throw new Error('No response body');
-            }
-
-            const decoder = new TextDecoder();
-            let buffer = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || '';
-
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        const data = line.slice(6);
-                        if (data === '[DONE]') continue;
-
-                        try {
-                            const parsed = JSON.parse(data);
-                            const token = parsed.choices[0]?.delta?.content;
-                            if (token && onToken) {
-                                onToken(token);
-                            }
-                        } catch (e) {
-                            // Ignore parse errors for incomplete chunks
-                        }
-                    }
+            // Simulate streaming by chunking the response
+            if (onToken && fullContent) {
+                const words = fullContent.split(' ');
+                for (let i = 0; i < words.length; i++) {
+                    const token = i === words.length - 1 ? words[i] : words[i] + ' ';
+                    onToken(token);
+                    // Small delay to simulate streaming
+                    await new Promise(resolve => setTimeout(resolve, 30));
                 }
             }
         } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Streaming Error: ${error.message}`);
+            if (axios.isAxiosError(error)) {
+                throw new Error(
+                    `Streaming Error: ${error.response?.data?.error?.message || error.message}`
+                );
             }
             throw error;
         }

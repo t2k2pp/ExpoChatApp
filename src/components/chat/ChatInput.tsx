@@ -9,8 +9,6 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -35,10 +33,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     };
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.container}
-        >
+        <View style={styles.container}>
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
@@ -49,6 +44,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     multiline
                     maxLength={2000}
                     editable={!disabled}
+                    onSubmitEditing={handleSend}
+                    blurOnSubmit={false}
                 />
                 <TouchableOpacity
                     style={[
@@ -65,7 +62,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     />
                 </TouchableOpacity>
             </View>
-        </KeyboardAvoidingView>
+        </View>
     );
 };
 
