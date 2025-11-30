@@ -38,11 +38,20 @@ export const SettingsScreen: React.FC = () => {
             setSystemPrompt(prompt);
 
             if (config.type === 'openai-compatible') {
-                setBaseUrl(config.baseUrl);
+                // Explicitly set values to prevent default concatenation
+                setBaseUrl(config.baseUrl || '');
                 setApiKey(config.apiKey || '');
-                setModel(config.model);
+                setModel(config.model || '');
                 setTemperature(config.temperature?.toString() || '0.7');
+            } else {
+                // Set empty strings for new users
+                setBaseUrl('');
+                setApiKey('');
+                setModel('');
+                setTemperature('0.7');
             }
+
+            console.log('Settings loaded - baseUrl:', config.baseUrl);
         } catch (error) {
             console.error('Failed to load settings:', error);
         }
