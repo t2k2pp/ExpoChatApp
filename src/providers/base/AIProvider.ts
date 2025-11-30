@@ -37,6 +37,12 @@ export abstract class AIProvider {
     abstract validateConnection(): Promise<boolean>;
 
     /**
+     * Get available models from the AI provider
+     * @returns Promise<string[]> array of model IDs
+     */
+    abstract getAvailableModels(): Promise<string[]>;
+
+    /**
      * Get the provider name
      */
     abstract getName(): string;

@@ -105,6 +105,20 @@ export class OpenAIProvider extends AIProvider {
         }
     }
 
+    async getAvailableModels(): Promise<string[]> {
+        try {
+            const response = await this.client.get('/models');
+            if (response.status === 200 && response.data.data) {
+                // OpenAI compatible API returns { data: [{ id: "model-name", ... }] }
+                return response.data.data.map((model: any) => model.id);
+            }
+            return [];
+        } catch (error) {
+            console.error('Failed to fetch models:', error);
+            return [];
+        }
+    }
+
     private formatMessages(
         messages: Message[],
         systemPrompt?: string
