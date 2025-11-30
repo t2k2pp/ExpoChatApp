@@ -6,7 +6,7 @@
 import { Message } from './Message';
 
 export interface Chat {
-    id: number;
+    id: string | number;
     title: string;
     createdAt: number;
     updatedAt: number;

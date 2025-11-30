@@ -149,11 +149,28 @@
 - [x] チャット履歴管理
 
 ### 進行中 🔄
-- [ ] Android Development Buildテスト
-- [ ] 実機での動作検証
+- [ ] Web版実装（ストレージ抽象化 + IndexedDB）
 
 ### ブロッカー 🚫
-- Web版: expo-sqlite のWeb非対応 → ストレージ抽象化で解決予定
+**Android Development Build関連:**
+- **キーボードUI問題**: キーボード表示時に入力欄が完全に隠れる
+  - KeyboardAvoidingViewがAndroidで機能していない
+  - 試行: KeyboardAwareScrollView、paddingBottom追加、レイアウト変更
+  - 状態: 未解決（コード変更が反映されない可能性）
+  
+- **Analysis折りたたみ機能が動作しない**
+  - MessageBubbleでパース処理を実装済み
+  - パターンマッチング: `analysisThe user...`形式に対応済み
+  - 状態: 未解決（コード変更が反映されない）
+  
+- **開発ビルドでコード変更が反映されない**
+  - Metro Bundler再起動、キャッシュクリア済み
+  - adb reverse設定済み
+  - npx expo run:android 再実行済み
+  - 状態: 調査中（Web版で修正確認後、再度アプローチ予定）
+
+**Web版対応:**
+- expo-sqlite のWeb非対応 → ストレージ抽象化で解決予定
 
 ---
 
