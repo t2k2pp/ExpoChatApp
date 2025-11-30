@@ -36,6 +36,23 @@ export const SettingsScreen: React.FC = () => {
         loadSettings();
     }, []);
 
+    const cleanModelName = (rawName: string): string => {
+        // Extract model name from full path like:
+        // "/home/user/models/model-name/model-name-00001.gguf" -> "model-name"
+
+        // Remove file extension
+        let cleaned = rawName.replace(/\.gguf$/i, '');
+
+        // Extract filename from path
+        const parts = cleaned.split('/');
+        const filename = parts[parts.length - 1] || cleaned;
+
+        // Remove part numbers like "-00001-of-00002"
+        cleaned = filename.replace(/-\d{5}(-of-\d{5})?$/i, '');
+
+        return cleaned;
+    };
+
     const loadSettings = async () => {
         try {
             const prompt = await storageService.getSystemPrompt();
@@ -214,12 +231,17 @@ export const SettingsScreen: React.FC = () => {
             const models = await provider.getAvailableModels();
 
             if (models.length > 0) {
-                setAvailableModels(models);
+                // Clean model names to remove paths and extensions
+                const cleanedModels = models.map(cleanModelName);
+                // Remove duplicates
+                const uniqueModels = Array.from(new Set(cleanedModels));
+                setAvailableModels(uniqueModels);
                 setTestResult({
-                    message: `✓ Loaded ${models.length} model(s) from server`,
+                    message: `✓ Loaded ${uniqueModels.length} model(s) from server`,
                     success: true
                 });
-                console.log('Available models:', models);
+                console.log('Raw models:', models);
+                console.log('Cleaned models:', uniqueModels);
             } else {
                 setTestResult({
                     message: '✗ No models found. Check server connection.',
