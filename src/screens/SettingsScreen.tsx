@@ -60,11 +60,27 @@ export const SettingsScreen: React.FC = () => {
 
     const handleSave = async () => {
         setLoading(true);
+        setTestResult(null);
+
         try {
+            // Validate inputs
+            if (!baseUrl.trim()) {
+                setTestResult({ message: 'Base URL is required', success: false });
+                setLoading(false);
+                return;
+            }
+
+            if (!model.trim()) {
+                setTestResult({ message: 'Model name is required', success: false });
+                setLoading(false);
+                return;
+            }
+
             // Validate temperature
             const tempValue = parseFloat(temperature);
             if (isNaN(tempValue) || tempValue < 0 || tempValue > 2) {
-                Alert.alert('Error', 'Temperature must be between 0 and 2');
+                setTestResult({ message: 'Temperature must be between 0 and 2', success: false });
+                setLoading(false);
                 return;
             }
 
@@ -81,9 +97,12 @@ export const SettingsScreen: React.FC = () => {
             };
             await storageService.saveProviderConfig(config);
 
+            console.log('Settings saved successfully:', config);
+            setTestResult({ message: '✓ Settings saved successfully!', success: true });
             Alert.alert('Success', 'Settings saved successfully');
         } catch (error) {
             console.error('Failed to save settings:', error);
+            setTestResult({ message: '✗ Failed to save settings', success: false });
             Alert.alert('Error', 'Failed to save settings');
         } finally {
             setLoading(false);
