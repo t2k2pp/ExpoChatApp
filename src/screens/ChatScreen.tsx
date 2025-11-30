@@ -124,11 +124,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
     };
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-        >
+        <View style={styles.container}>
             <FlatList
                 ref={flatListRef}
                 data={messages}
@@ -144,8 +140,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
                     </>
                 )}
             />
-            <ChatInput onSend={handleSendMessage} disabled={isTyping} />
-        </KeyboardAvoidingView>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+            >
+                <ChatInput onSend={handleSendMessage} disabled={isTyping} />
+            </KeyboardAvoidingView>
+        </View>
     );
 };
 
@@ -156,5 +157,6 @@ const styles = StyleSheet.create({
     },
     messageList: {
         paddingVertical: 16,
+        paddingBottom: 100, // Space for input area
     },
 });

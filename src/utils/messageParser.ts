@@ -26,19 +26,25 @@ export function parseMessageContent(content: string): ParsedMessage {
         return result;
     }
 
-    // Pattern 2: "analysisText..." format (no colon, direct text)
-    //  Example: "analysisThe user writes in Japanese..."
-    const analysisNoColonPattern = /^analysis([^]*?)(?:\n\n|\r\n\r\n)([^]*)/i;
-    const noColonMatch = content.match(analysisNoColonPattern);
+    // Pattern 2: "analysisThe user..." - no space, no colon, single newline
+    // This matches the actual format from gpt-oss-120b
+    const analysisDirectPattern = /^analysis(.+?)(?:\n|$)([\s\S]*)/i;
+    const directMatch = content.match(analysisDirectPattern);
 
-    if (noColonMatch && noColonMatch[1] && noColonMatch[2]) {
-        result.analysis = noColonMatch[1].trim();
-        result.response = noColonMatch[2].trim();
-        return result;
+    if (directMatch && directMatch[1] && directMatch[2]) {
+        const analysisText = directMatch[1].trim();
+        const responseText = directMatch[2].trim();
+
+        // Verify it looks like analysis (English reasoning text)
+        if (/(?:user|says|writes|wants|should|probably|greeting|respond)/i.test(analysisText) &&
+            analysisText.length < content.length * 0.7) {
+            result.analysis = analysisText;
+            result.response = responseText;
+            return result;
+        }
     }
 
-    // Pattern 3: English reasoning text before actual response
-    // Matches patterns like "The user writes...", "We have a conversation..."
+    // Pattern 3: English reasoning text with double newline separation
     const reasoningPattern = /^((?:The user|We have|User says)[^]*?)(?:\n\n|\r\n\r\n)([^]*)/i;
     const reasoningMatch = content.match(reasoningPattern);
 
