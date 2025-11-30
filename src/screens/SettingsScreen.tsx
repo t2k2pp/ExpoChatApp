@@ -312,7 +312,7 @@ export const SettingsScreen: React.FC = () => {
 
                 {availableModels.length > 0 && (
                     <View style={styles.modelListContainer}>
-                        <Text style={styles.modelListTitle}>Available Models ({availableModels.length}):</Text>
+                        <Text style={styles.modelListTitle}>📋 Available Models ({availableModels.length}) - Click to select:</Text>
                         <View style={styles.modelList}>
                             {availableModels.map((modelName) => (
                                 <TouchableOpacity
@@ -323,12 +323,17 @@ export const SettingsScreen: React.FC = () => {
                                     ]}
                                     onPress={() => setModel(modelName)}
                                 >
-                                    <Text style={[
-                                        styles.modelItemText,
-                                        model === modelName && styles.modelItemTextSelected
-                                    ]}>
-                                        {modelName}
-                                    </Text>
+                                    <View style={styles.modelItemContent}>
+                                        <Text style={[
+                                            styles.modelItemText,
+                                            model === modelName && styles.modelItemTextSelected
+                                        ]}>
+                                            {modelName}
+                                        </Text>
+                                        {model === modelName && (
+                                            <Text style={styles.checkmark}>✓</Text>
+                                        )}
+                                    </View>
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -501,5 +506,16 @@ const styles = StyleSheet.create({
     modelItemTextSelected: {
         color: '#1976D2',
         fontWeight: '600',
+    },
+    modelItemContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    checkmark: {
+        fontSize: 18,
+        color: '#1976D2',
+        fontWeight: 'bold',
+        marginLeft: 8,
     },
 });

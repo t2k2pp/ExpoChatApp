@@ -73,9 +73,13 @@ export class StorageService {
     async getProviderConfig(): Promise<ProviderConfig> {
         try {
             const configJson = await this.adapter.getItem(KEYS.PROVIDER_CONFIG);
+            console.log('[StorageService] getProviderConfig - raw value:', configJson);
             if (configJson) {
-                return JSON.parse(configJson);
+                const parsed = JSON.parse(configJson);
+                console.log('[StorageService] getProviderConfig - parsed:', parsed);
+                return parsed;
             }
+            console.log('[StorageService] getProviderConfig - no config found, using DEFAULT');
             return DEFAULT_SETTINGS.providerConfig;
         } catch (error) {
             console.error('Failed to get provider config:', error);
