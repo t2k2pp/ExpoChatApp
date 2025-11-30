@@ -83,7 +83,31 @@ export const SettingsScreen: React.FC = () => {
     const handleTestConnection = async () => {
         setLoading(true);
         try {
+            // Validate inputs first
+            if (!baseUrl.trim()) {
+                Alert.alert('Validation Error', 'Base URL is required');
+                console.error('Test Connection: Base URL is required');
+                setLoading(false);
+                return;
+            }
+
+            if (!model.trim()) {
+                Alert.alert('Validation Error', 'Model name is required');
+                console.error('Test Connection: Model name is required');
+                setLoading(false);
+                return;
+            }
+
             const tempValue = parseFloat(temperature);
+            if (isNaN(tempValue) || tempValue < 0 || tempValue > 2) {
+                Alert.alert('Validation Error', 'Temperature must be between 0 and 2');
+                console.error('Test Connection: Invalid temperature value');
+                setLoading(false);
+                return;
+            }
+
+            console.log('Testing connection to:', baseUrl.trim());
+
             const config: OpenAICompatibleConfig = {
                 type: 'openai-compatible',
                 baseUrl: baseUrl.trim(),
@@ -96,13 +120,25 @@ export const SettingsScreen: React.FC = () => {
             const isValid = await provider.validateConnection();
 
             if (isValid) {
-                Alert.alert('Success', 'Connection successful!');
+                console.log('✅ Connection test successful!');
+                Alert.alert('Success', 'Connection successful! Your AI server is responding.');
             } else {
-                Alert.alert('Error', 'Connection failed. Please check your settings.');
+                console.error('❌ Connection test failed');
+                Alert.alert(
+                    'Connection Failed',
+                    'Unable to connect to the AI server. Please check:\n\n' +
+                    '• Base URL is correct\n' +
+                    '• Server is running\n' +
+                    '• Network connection is available'
+                );
             }
         } catch (error) {
-            console.error('Connection test failed:', error);
-            Alert.alert('Error', 'Connection test failed: ' + (error as Error).message);
+            console.error('Connection test error:', error);
+            const errorMessage = (error as Error).message || 'Unknown error';
+            Alert.alert(
+                'Connection Error',
+                `Failed to connect: ${errorMessage}\n\nPlease verify your settings.`
+            );
         } finally {
             setLoading(false);
         }

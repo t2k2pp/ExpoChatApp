@@ -1,10 +1,11 @@
 /**
  * Storage Service
- * Manages AsyncStorage operations for app settings
+ * Manages key-value storage for app settings using platform-specific adapters
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppSettings, DEFAULT_SETTINGS, ProviderConfig } from '../../models';
+import { IKeyValueStorage, AsyncStorageAdapter, LocalStorageAdapter } from './adapters';
+import { isWeb } from '../../utils/platformUtils';
 
 const KEYS = {
     SETTINGS: '@chat_app_settings',
@@ -14,8 +15,12 @@ const KEYS = {
 
 export class StorageService {
     private static instance: StorageService;
+    private adapter: IKeyValueStorage;
 
-    private constructor() { }
+    private constructor() {
+        // Select adapter based on platform
+        this.adapter = isWeb() ? new LocalStorageAdapter() : new AsyncStorageAdapter();
+    }
 
     static getInstance(): StorageService {
         if (!StorageService.instance) {
@@ -26,7 +31,7 @@ export class StorageService {
 
     async getSettings(): Promise<AppSettings> {
         try {
-            const settingsJson = await AsyncStorage.getItem(KEYS.SETTINGS);
+            const settingsJson = await this.adapter.getItem(KEYS.SETTINGS);
             if (settingsJson) {
                 return JSON.parse(settingsJson);
             }
@@ -39,7 +44,7 @@ export class StorageService {
 
     async saveSettings(settings: AppSettings): Promise<void> {
         try {
-            await AsyncStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
+            await this.adapter.setItem(KEYS.SETTINGS, JSON.stringify(settings));
         } catch (error) {
             console.error('Failed to save settings:', error);
             throw error;
@@ -48,7 +53,7 @@ export class StorageService {
 
     async getSystemPrompt(): Promise<string> {
         try {
-            const prompt = await AsyncStorage.getItem(KEYS.SYSTEM_PROMPT);
+            const prompt = await this.adapter.getItem(KEYS.SYSTEM_PROMPT);
             return prompt || DEFAULT_SETTINGS.systemPrompt;
         } catch (error) {
             console.error('Failed to get system prompt:', error);
@@ -58,7 +63,7 @@ export class StorageService {
 
     async saveSystemPrompt(prompt: string): Promise<void> {
         try {
-            await AsyncStorage.setItem(KEYS.SYSTEM_PROMPT, prompt);
+            await this.adapter.setItem(KEYS.SYSTEM_PROMPT, prompt);
         } catch (error) {
             console.error('Failed to save system prompt:', error);
             throw error;
@@ -67,7 +72,7 @@ export class StorageService {
 
     async getProviderConfig(): Promise<ProviderConfig> {
         try {
-            const configJson = await AsyncStorage.getItem(KEYS.PROVIDER_CONFIG);
+            const configJson = await this.adapter.getItem(KEYS.PROVIDER_CONFIG);
             if (configJson) {
                 return JSON.parse(configJson);
             }
@@ -80,7 +85,7 @@ export class StorageService {
 
     async saveProviderConfig(config: ProviderConfig): Promise<void> {
         try {
-            await AsyncStorage.setItem(KEYS.PROVIDER_CONFIG, JSON.stringify(config));
+            await this.adapter.setItem(KEYS.PROVIDER_CONFIG, JSON.stringify(config));
         } catch (error) {
             console.error('Failed to save provider config:', error);
             throw error;
@@ -89,7 +94,10 @@ export class StorageService {
 
     async clearAllData(): Promise<void> {
         try {
-            await AsyncStorage.multiRemove(Object.values(KEYS));
+            const keys = Object.values(KEYS);
+            for (const key of keys) {
+                await this.adapter.removeItem(key);
+            }
         } catch (error) {
             console.error('Failed to clear all data:', error);
             throw error;
