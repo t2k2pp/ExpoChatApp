@@ -10,8 +10,8 @@ import {
     StyleSheet,
     Platform,
     Alert,
+    KeyboardAvoidingView,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Message } from '../models';
 import { ChatService } from '../services';
 import { MessageBubble, ChatInput, TypingIndicator } from '../components/chat';
@@ -124,32 +124,28 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
     };
 
     return (
-        <View style={styles.container}>
-            <KeyboardAwareScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                enableOnAndroid={true}
-                enableAutomaticScroll={true}
-                extraScrollHeight={20}
-                keyboardShouldPersistTaps="handled"
-            >
-                <FlatList
-                    ref={flatListRef}
-                    data={messages}
-                    renderItem={renderMessage}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.messageList}
-                    scrollEnabled={false}
-                    ListFooterComponent={() => (
-                        <>
-                            {renderStreamingMessage()}
-                            {isTyping && !currentResponse && <TypingIndicator />}
-                        </>
-                    )}
-                />
-            </KeyboardAwareScrollView>
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+            <FlatList
+                ref={flatListRef}
+                data={messages}
+                renderItem={renderMessage}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.messageList}
+                onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+                onLayout={() => flatListRef.current?.scrollToEnd()}
+                ListFooterComponent={() => (
+                    <>
+                        {renderStreamingMessage()}
+                        {isTyping && !currentResponse && <TypingIndicator />}
+                    </>
+                )}
+            />
             <ChatInput onSend={handleSendMessage} disabled={isTyping} />
-        </View>
+        </KeyboardAvoidingView>
     );
 };
 
@@ -158,14 +154,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFF',
     },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        flexGrow: 1,
-    },
     messageList: {
         paddingVertical: 16,
-        flexGrow: 1,
     },
 });

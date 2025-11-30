@@ -20,33 +20,35 @@ export function parseMessageContent(content: string): ParsedMessage {
     const tagPattern = /<\|analysis\|>([\s\S]*?)<\|(?:message|final|end)\|>/i;
     const tagMatch = content.match(tagPattern);
 
-    if (tagMatch) {
+    if (tagMatch && tagMatch[1]) {
         result.analysis = tagMatch[1].trim();
         result.response = content.replace(tagPattern, '').trim();
         return result;
     }
 
-    // Pattern 2: "analysis" or "analysisText" at the beginning
-    const analysisPrefix = /^analysis\s*[:：]?\s*([\s\S]*?)(?:\n\n|\r\n\r\n)([^]*)/i;
-    const prefixMatch = content.match(analysisPrefix);
+    // Pattern 2: "analysisText..." format (no colon, direct text)
+    //  Example: "analysisThe user writes in Japanese..."
+    const analysisNoColonPattern = /^analysis([^]*?)(?:\n\n|\r\n\r\n)([^]*)/i;
+    const noColonMatch = content.match(analysisNoColonPattern);
 
-    if (prefixMatch) {
-        result.analysis = prefixMatch[1].trim();
-        result.response = prefixMatch[2].trim();
+    if (noColonMatch && noColonMatch[1] && noColonMatch[2]) {
+        result.analysis = noColonMatch[1].trim();
+        result.response = noColonMatch[2].trim();
         return result;
     }
 
     // Pattern 3: English reasoning text before actual response
-    const reasoningPattern = /^((?:The user|We have|User says|analysis)[^]*?)\n\n([^]*)/i;
+    // Matches patterns like "The user writes...", "We have a conversation..."
+    const reasoningPattern = /^((?:The user|We have|User says)[^]*?)(?:\n\n|\r\n\r\n)([^]*)/i;
     const reasoningMatch = content.match(reasoningPattern);
 
-    if (reasoningMatch && reasoningMatch[1].length < content.length * 0.5) {
-        // Only treat as analysis if it's less than 50% of total content
+    if (reasoningMatch && reasoningMatch[1] && reasoningMatch[2]) {
         const potentialAnalysis = reasoningMatch[1].trim();
         const potentialResponse = reasoningMatch[2].trim();
 
-        // Check if it looks like reasoning (contains English explanation keywords)
-        if (/(?:user|conversation|respond|should|probably|means)/i.test(potentialAnalysis)) {
+        // Only treat as analysis if it contains reasoning keywords and is reasonable length
+        if (potentialAnalysis.length < content.length * 0.6 &&
+            /(?:user|conversation|respond|should|probably|means|writes|says)/i.test(potentialAnalysis)) {
             result.analysis = potentialAnalysis;
             result.response = potentialResponse;
             return result;
