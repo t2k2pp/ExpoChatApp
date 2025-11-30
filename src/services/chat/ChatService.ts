@@ -85,8 +85,11 @@ export class ChatService {
         const message = this.createMessage(userMessage);
         await this.databaseService.saveMessage(chatId, message);
 
-        // Get chat history
-        const messages = await this.databaseService.getChatMessages(chatId);
+        // Get chat history and ensure the new message is included
+        const previousMessages = await this.databaseService.getChatMessages(chatId);
+        const messages = previousMessages.some(m => m.id === message.id)
+            ? previousMessages
+            : [...previousMessages, message];
         const systemPrompt = await this.storageService.getSystemPrompt();
 
         // Get AI response
