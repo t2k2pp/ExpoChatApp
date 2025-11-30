@@ -24,6 +24,7 @@ export const SettingsScreen: React.FC = () => {
     const [model, setModel] = useState('');
     const [temperature, setTemperature] = useState('0.7');
     const [loading, setLoading] = useState(false);
+    const [testResult, setTestResult] = useState<{ message: string; success: boolean } | null>(null);
     const storageService = StorageService.getInstance();
 
     useEffect(() => {
@@ -91,17 +92,19 @@ export const SettingsScreen: React.FC = () => {
 
     const handleTestConnection = async () => {
         setLoading(true);
+        setTestResult(null); // Clear previous result
+
         try {
             // Validate inputs first
             if (!baseUrl.trim()) {
-                Alert.alert('Validation Error', 'Base URL is required');
+                setTestResult({ message: 'Base URL is required', success: false });
                 console.error('Test Connection: Base URL is required');
                 setLoading(false);
                 return;
             }
 
             if (!model.trim()) {
-                Alert.alert('Validation Error', 'Model name is required');
+                setTestResult({ message: 'Model name is required', success: false });
                 console.error('Test Connection: Model name is required');
                 setLoading(false);
                 return;
@@ -109,7 +112,7 @@ export const SettingsScreen: React.FC = () => {
 
             const tempValue = parseFloat(temperature);
             if (isNaN(tempValue) || tempValue < 0 || tempValue > 2) {
-                Alert.alert('Validation Error', 'Temperature must be between 0 and 2');
+                setTestResult({ message: 'Temperature must be between 0 and 2', success: false });
                 console.error('Test Connection: Invalid temperature value');
                 setLoading(false);
                 return;
@@ -130,9 +133,17 @@ export const SettingsScreen: React.FC = () => {
 
             if (isValid) {
                 console.log('✅ Connection test successful!');
+                setTestResult({
+                    message: '✓ Connection successful! Your AI server is responding.',
+                    success: true
+                });
                 Alert.alert('Success', 'Connection successful! Your AI server is responding.');
             } else {
                 console.error('❌ Connection test failed');
+                setTestResult({
+                    message: '✗ Connection failed. Please check your Base URL and ensure the server is running.',
+                    success: false
+                });
                 Alert.alert(
                     'Connection Failed',
                     'Unable to connect to the AI server. Please check:\n\n' +
@@ -144,6 +155,10 @@ export const SettingsScreen: React.FC = () => {
         } catch (error) {
             console.error('Connection test error:', error);
             const errorMessage = (error as Error).message || 'Unknown error';
+            setTestResult({
+                message: `✗ Connection error: ${errorMessage}`,
+                success: false
+            });
             Alert.alert(
                 'Connection Error',
                 `Failed to connect: ${errorMessage}\n\nPlease verify your settings.`
@@ -217,6 +232,15 @@ export const SettingsScreen: React.FC = () => {
                 />
             </View>
 
+            {testResult && (
+                <View style={[
+                    styles.resultBox,
+                    testResult.success ? styles.resultSuccess : styles.resultError
+                ]}>
+                    <Text style={styles.resultText}>{testResult.message}</Text>
+                </View>
+            )}
+
             <View style={styles.infoContainer}>
                 <Text style={styles.infoTitle}>📖 Quick Setup Guide</Text>
                 <Text style={styles.infoText}>
@@ -273,5 +297,24 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
         lineHeight: 20,
+    },
+    resultBox: {
+        marginTop: 16,
+        padding: 12,
+        borderRadius: 8,
+        borderWidth: 2,
+    },
+    resultSuccess: {
+        backgroundColor: '#E8F5E9',
+        borderColor: '#4CAF50',
+    },
+    resultError: {
+        backgroundColor: '#FFEBEE',
+        borderColor: '#F44336',
+    },
+    resultText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#000',
     },
 });
