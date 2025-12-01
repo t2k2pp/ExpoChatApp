@@ -1,6 +1,6 @@
 /**
  * Chat Input Component
- * Text input field with send button for chat messages
+ * Text input field with send button and web search toggle for chat messages
  */
 
 import React, { useState } from 'react';
@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 interface ChatInputProps {
-    onSend: (message: string) => void;
+    onSend: (message: string, webSearchEnabled: boolean) => void;
     disabled?: boolean;
     placeholder?: string;
 }
@@ -24,17 +24,34 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     placeholder = 'Type a message...',
 }) => {
     const [message, setMessage] = useState('');
+    const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
     const handleSend = () => {
         if (message.trim() && !disabled) {
-            onSend(message.trim());
+            onSend(message.trim(), webSearchEnabled);
             setMessage('');
         }
+    };
+
+    const toggleWebSearch = () => {
+        setWebSearchEnabled(!webSearchEnabled);
     };
 
     return (
         <View style={styles.container}>
             <View style={styles.inputContainer}>
+                <TouchableOpacity
+                    style={styles.webSearchButton}
+                    onPress={toggleWebSearch}
+                    disabled={disabled}
+                >
+                    <Ionicons
+                        name="globe-outline"
+                        size={24}
+                        color={webSearchEnabled ? '#007AFF' : '#999'}
+                    />
+                </TouchableOpacity>
+
                 <TextInput
                     style={styles.input}
                     value={message}
@@ -47,6 +64,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     onSubmitEditing={handleSend}
                     blurOnSubmit={false}
                 />
+
                 <TouchableOpacity
                     style={[
                         styles.sendButton,
@@ -77,6 +95,14 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
         paddingHorizontal: 16,
         paddingVertical: 12,
+    },
+    webSearchButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 8,
     },
     input: {
         flex: 1,
