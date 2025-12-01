@@ -28,6 +28,10 @@ export class ChatService {
         return ChatService.instance;
     }
 
+    async initialize(): Promise<void> {
+        await this.databaseService.initDatabase();
+    }
+
     setAIProvider(provider: IAIProvider): void {
         this.aiProvider = provider;
     }
