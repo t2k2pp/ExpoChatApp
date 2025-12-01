@@ -14,8 +14,12 @@ interface MessageBubbleProps {
     message: Message;
 }
 
+// デバッグモード：trueにすると生レスポンスを表示
+const DEBUG_RAW_RESPONSE = true;
+
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
+    const [isDebugExpanded, setIsDebugExpanded] = useState(false);
     const isUser = message.role === 'user';
     const isSystem = message.role === 'system';
 
@@ -34,6 +38,33 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     return (
         <View style={[styles.container, isUser && styles.userContainer]}>
             <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
+                {/* Debug Section (only for assistant) */}
+                {!isUser && DEBUG_RAW_RESPONSE && (
+                    <>
+                        <TouchableOpacity
+                            style={styles.debugHeader}
+                            onPress={() => setIsDebugExpanded(!isDebugExpanded)}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={styles.debugLabel}>
+                                🔍 Raw Response
+                            </Text>
+                            <Ionicons
+                                name={isDebugExpanded ? 'chevron-up' : 'chevron-down'}
+                                size={14}
+                                color="#999"
+                            />
+                        </TouchableOpacity>
+                        {isDebugExpanded && (
+                            <View style={styles.debugContent}>
+                                <Text style={styles.debugText} selectable>
+                                    {message.content}
+                                </Text>
+                            </View>
+                        )}
+                    </>
+                )}
+
                 {/* Analysis Section (only for assistant) */}
                 {!isUser && hasAnalysis && (
                     <TouchableOpacity
@@ -137,5 +168,33 @@ const styles = StyleSheet.create({
         lineHeight: 18,
         color: '#555',
         fontStyle: 'italic',
+    },
+    debugHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingBottom: 6,
+        marginBottom: 6,
+        borderBottomWidth: 1,
+        borderBottomColor: '#DDD',
+    },
+    debugLabel: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#999',
+        marginRight: 4,
+    },
+    debugContent: {
+        backgroundColor: '#FAFAFA',
+        padding: 8,
+        borderRadius: 6,
+        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    debugText: {
+        fontSize: 11,
+        lineHeight: 16,
+        color: '#666',
+        fontFamily: 'monospace',
     },
 });
