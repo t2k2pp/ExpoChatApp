@@ -1,7 +1,7 @@
 /**
  * Message Bubble Component
  * Displays a single chat message with role-based styling
- * Supports collapsible analysis/thinking sections
+ * Supports thinking process modal display
  */
 
 import React, { useState } from 'react';
@@ -9,17 +9,18 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Message } from '../../models';
 import { parseMessageContent, cleanControlTokens } from '../../utils/messageParser';
+import { ThinkingModal } from './ThinkingModal';
 
 interface MessageBubbleProps {
     message: Message;
 }
 
 // デバッグモード：trueにすると生レスポンスを表示
-const DEBUG_RAW_RESPONSE = true;
+const DEBUG_RAW_RESPONSE = false;
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
-    const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
     const [isDebugExpanded, setIsDebugExpanded] = useState(false);
+    const [isThinkingModalVisible, setIsThinkingModalVisible] = useState(false);
     const isUser = message.role === 'user';
     const isSystem = message.role === 'system';
 
@@ -31,9 +32,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         );
     }
 
-    // Parse message to extract analysis and response
+    // Parse message to extract thinking steps and response
     const parsed = parseMessageContent(message.content);
-    const hasAnalysis = !!parsed.analysis && parsed.analysis.length > 0;
+    const hasThinking = parsed.thinkingSteps.length > 0;
 
     return (
         <View style={[styles.container, isUser && styles.userContainer]}>
@@ -65,38 +66,32 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     </>
                 )}
 
-                {/* Analysis Section (only for assistant) */}
-                {!isUser && hasAnalysis && (
-                    <TouchableOpacity
-                        style={styles.analysisHeader}
-                        onPress={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
-                        activeOpacity={0.7}
-                    >
-                        <Text style={styles.analysisLabel}>
-                            analysis
-                        </Text>
-                        <Ionicons
-                            name={isAnalysisExpanded ? 'chevron-up' : 'chevron-down'}
-                            size={16}
-                            color="#666"
-                        />
-                    </TouchableOpacity>
-                )}
-
-                {/* Expanded Analysis Content */}
-                {!isUser && hasAnalysis && isAnalysisExpanded && (
-                    <View style={styles.analysisContent}>
-                        <Text style={styles.analysisText}>
-                            {cleanControlTokens(parsed.analysis || '')}
-                        </Text>
-                    </View>
-                )}
-
                 {/* Main Response */}
                 <Text style={[styles.text, isUser && styles.userText]}>
                     {cleanControlTokens(parsed.response)}
                 </Text>
+
+                {/* Thinking Process Button (only for assistant with thinking) */}
+                {!isUser && hasThinking && (
+                    <TouchableOpacity
+                        style={styles.thinkingButton}
+                        onPress={() => setIsThinkingModalVisible(true)}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="bulb-outline" size={16} color="#666" />
+                        <Text style={styles.thinkingButtonText}>
+                            💭 思考プロセスを見る
+                        </Text>
+                    </TouchableOpacity>
+                )}
             </View>
+
+            {/* Thinking Process Modal */}
+            <ThinkingModal
+                visible={isThinkingModalVisible}
+                thinkingSteps={parsed.thinkingSteps}
+                onClose={() => setIsThinkingModalVisible(false)}
+            />
         </View>
     );
 };
@@ -142,33 +137,6 @@ const styles = StyleSheet.create({
         color: '#999',
         fontStyle: 'italic',
     },
-    analysisHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingBottom: 8,
-        marginBottom: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: '#CCC',
-    },
-    analysisLabel: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#666',
-        marginRight: 6,
-        fontStyle: 'italic',
-    },
-    analysisContent: {
-        backgroundColor: '#F5F5F5',
-        padding: 10,
-        borderRadius: 8,
-        marginBottom: 10,
-    },
-    analysisText: {
-        fontSize: 13,
-        lineHeight: 18,
-        color: '#555',
-        fontStyle: 'italic',
-    },
     debugHeader: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -196,5 +164,18 @@ const styles = StyleSheet.create({
         lineHeight: 16,
         color: '#666',
         fontFamily: 'monospace',
+    },
+    thinkingButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 8,
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: '#CCC',
+    },
+    thinkingButtonText: {
+        fontSize: 14,
+        color: '#666',
+        marginLeft: 4,
     },
 });
