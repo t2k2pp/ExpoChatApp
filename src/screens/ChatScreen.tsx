@@ -57,7 +57,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
         }
     };
 
-    const handleSendMessage = async (content: string) => {
+    const handleSendMessage = async (content: string, webSearchEnabled: boolean = false) => {
         const userMessage: Message = {
             id: Date.now().toString(),
             role: 'user',
@@ -78,7 +78,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
                 (token) => {
                     fullResponse += token;
                     setCurrentResponse(fullResponse);
-                }
+                },
+                webSearchEnabled
             );
 
             // Clear streaming response and add final message
