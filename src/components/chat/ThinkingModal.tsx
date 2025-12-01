@@ -88,6 +88,7 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: '#F8F8F8',
+        paddingTop: 40, // Avoid overlap with status bar
     },
     container: {
         flex: 1,

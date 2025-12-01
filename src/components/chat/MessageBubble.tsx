@@ -1,12 +1,13 @@
 /**
  * Message Bubble Component
  * Displays a single chat message with role-based styling
- * Supports thinking process modal display
+ * Supports thinking process modal display and markdown rendering
  */
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Markdown from 'react-native-markdown-display';
 import { Message } from '../../models';
 import { parseMessageContent, cleanControlTokens } from '../../utils/messageParser';
 import { ThinkingModal } from './ThinkingModal';
@@ -35,6 +36,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     // Parse message to extract thinking steps and response
     const parsed = parseMessageContent(message.content);
     const hasThinking = parsed.thinkingSteps.length > 0;
+    const cleanedResponse = cleanControlTokens(parsed.response);
 
     return (
         <View style={[styles.container, isUser && styles.userContainer]}>
@@ -66,10 +68,31 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     </>
                 )}
 
-                {/* Main Response */}
-                <Text style={[styles.text, isUser && styles.userText]}>
-                    {cleanControlTokens(parsed.response)}
-                </Text>
+                {/* Main Response with Markdown */}
+                {isUser ? (
+                    <Text style={styles.userText}>
+                        {cleanedResponse}
+                    </Text>
+                ) : (
+                    <Markdown
+                        style={{
+                            body: styles.markdownBody,
+                            heading1: styles.markdownH1,
+                            heading2: styles.markdownH2,
+                            heading3: styles.markdownH3,
+                            strong: styles.markdownBold,
+                            em: styles.markdownItalic,
+                            list_item: styles.markdownListItem,
+                            bullet_list: styles.markdownList,
+                            ordered_list: styles.markdownList,
+                            code_inline: styles.markdownCodeInline,
+                            code_block: styles.markdownCodeBlock,
+                            fence: styles.markdownCodeBlock,
+                        }}
+                    >
+                        {cleanedResponse}
+                    </Markdown>
+                )}
 
                 {/* Thinking Process Button (only for assistant with thinking) */}
                 {!isUser && hasThinking && (
@@ -119,12 +142,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#E5E5EA',
         borderBottomLeftRadius: 4,
     },
-    text: {
+    userText: {
         fontSize: 16,
         lineHeight: 22,
-        color: '#000',
-    },
-    userText: {
         color: '#FFF',
     },
     systemContainer: {
@@ -177,5 +197,62 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
         marginLeft: 4,
+    },
+    // Markdown styles
+    markdownBody: {
+        fontSize: 16,
+        lineHeight: 22,
+        color: '#000',
+    },
+    markdownH1: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#000',
+        marginTop: 8,
+        marginBottom: 8,
+    },
+    markdownH2: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: '#000',
+        marginTop: 8,
+        marginBottom: 6,
+    },
+    markdownH3: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#000',
+        marginTop: 6,
+        marginBottom: 4,
+    },
+    markdownBold: {
+        fontWeight: '700',
+    },
+    markdownItalic: {
+        fontStyle: 'italic',
+    },
+    markdownListItem: {
+        marginBottom: 4,
+    },
+    markdownList: {
+        marginTop: 4,
+        marginBottom: 4,
+    },
+    markdownCodeInline: {
+        backgroundColor: '#F0F0F0',
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+        borderRadius: 3,
+        fontFamily: 'monospace',
+        fontSize: 14,
+    },
+    markdownCodeBlock: {
+        backgroundColor: '#F0F0F0',
+        padding: 8,
+        borderRadius: 6,
+        fontFamily: 'monospace',
+        fontSize: 14,
+        marginTop: 4,
+        marginBottom: 4,
     },
 });
