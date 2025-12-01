@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Chat, CreateMessageDTO, Message } from '../../models';
 import { DatabaseService } from '../database';
 import { StorageService } from '../storage';
-import { IAIProvider } from '../../providers/types';
+import { IAIProvider } from '../../providers';
 import { SearXNGService } from '../search';
 
 export class ChatService {
