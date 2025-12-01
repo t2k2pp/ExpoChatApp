@@ -6,3 +6,4 @@ export * from './Message';
 export * from './Chat';
 export * from './Provider';
 export * from './Settings';
+export * from './SearXNG';

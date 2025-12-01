@@ -3,7 +3,7 @@
  * Manages key-value storage for app settings using platform-specific adapters
  */
 
-import { AppSettings, DEFAULT_SETTINGS, ProviderConfig } from '../../models';
+import { AppSettings, DEFAULT_SETTINGS, ProviderConfig, SearXNGConfig } from '../../models';
 import { IKeyValueStorage, AsyncStorageAdapter, LocalStorageAdapter } from './adapters';
 import { isWeb } from '../../utils/platformUtils';
 
@@ -11,6 +11,7 @@ const KEYS = {
     SETTINGS: '@chat_app_settings',
     SYSTEM_PROMPT: '@chat_app_system_prompt',
     PROVIDER_CONFIG: '@chat_app_provider_config',
+    SEARXNG_CONFIG: '@chat_app_searxng_config',
 };
 
 export class StorageService {
@@ -92,6 +93,35 @@ export class StorageService {
             await this.adapter.setItem(KEYS.PROVIDER_CONFIG, JSON.stringify(config));
         } catch (error) {
             console.error('Failed to save provider config:', error);
+            throw error;
+        }
+    }
+
+    async getSearXNGConfig(): Promise<SearXNGConfig> {
+        try {
+            const configJson = await this.adapter.getItem(KEYS.SEARXNG_CONFIG);
+            if (configJson) {
+                return JSON.parse(configJson);
+            }
+            // Default config
+            return {
+                enabled: false,
+                baseUrl: 'http://192.168.1.24:8081',
+            };
+        } catch (error) {
+            console.error('Failed to get SearXNG config:', error);
+            return {
+                enabled: false,
+                baseUrl: 'http://192.168.1.24:8081',
+            };
+        }
+    }
+
+    async setSearXNGConfig(config: SearXNGConfig): Promise<void> {
+        try {
+            await this.adapter.setItem(KEYS.SEARXNG_CONFIG, JSON.stringify(config));
+        } catch (error) {
+            console.error('Failed to save SearXNG config:', error);
             throw error;
         }
     }
