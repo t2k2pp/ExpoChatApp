@@ -110,37 +110,37 @@ export class IndexedDBAdapter implements IDatabaseStorage {
 
         // SELECT queries
         if (sqlUpper.startsWith('SELECT')) {
-            if (sql.includes('FROM chats')) {
+            if (sql.includes('FROM chats') || sql.includes('from chats')) {
                 return await this.selectChats(sql, params);
-            } else if (sql.includes('FROM messages')) {
+            } else if (sql.includes('FROM messages') || sql.includes('from messages')) {
                 return await this.selectMessages(sql, params);
             }
         }
 
         // INSERT queries
-        if (sqlUpper.startsWith('INSERT INTO chats')) {
+        if (sqlUpper.startsWith('INSERT INTO CHATS') || sqlUpper.includes('INSERT INTO chats')) {
             await this.insertChat(params);
             return [];
         }
 
-        if (sqlUpper.startsWith('INSERT INTO messages')) {
+        if (sqlUpper.startsWith('INSERT INTO MESSAGES') || sqlUpper.includes('INSERT INTO messages')) {
             await this.insertMessage(params);
             return [];
         }
 
         // UPDATE queries
-        if (sqlUpper.startsWith('UPDATE chats')) {
-            await this.updateChat(params);
+        if (sqlUpper.includes('UPDATE CHATS') || sqlUpper.includes('UPDATE chats')) {
+            await this.updateChat(sql, params);
             return [];
         }
 
         // DELETE queries
-        if (sqlUpper.startsWith('DELETE FROM chats')) {
+        if (sqlUpper.includes('DELETE FROM CHATS') || sqlUpper.includes('DELETE FROM chats')) {
             await this.deleteChat(params);
             return [];
         }
 
-        if (sqlUpper.startsWith('DELETE FROM messages')) {
+        if (sqlUpper.includes('DELETE FROM MESSAGES') || sqlUpper.includes('DELETE FROM messages')) {
             await this.deleteMessages(params);
             return [];
         }
@@ -154,7 +154,7 @@ export class IndexedDBAdapter implements IDatabaseStorage {
         const store = tx.objectStore('chats');
 
         // SELECT * FROM chats WHERE id = ?
-        if (sql.includes('WHERE id')) {
+        if (sql.includes('WHERE id') || sql.includes('where id')) {
             const chat = await store.get(params[0]);
             return chat ? [chat] : [];
         }
@@ -170,7 +170,7 @@ export class IndexedDBAdapter implements IDatabaseStorage {
         const store = tx.objectStore('messages');
 
         // SELECT * FROM messages WHERE chat_id = ? ORDER BY timestamp ASC
-        if (sql.includes('WHERE chat_id')) {
+        if (sql.includes('WHERE chat_id') || sql.includes('where chat_id')) {
             const index = store.index('by-chat');
             const messages = await index.getAll(params[0]);
             return messages.sort((a, b) => a.timestamp - b.timestamp);
@@ -200,14 +200,27 @@ export class IndexedDBAdapter implements IDatabaseStorage {
         });
     }
 
-    private async updateChat(params: any[]): Promise<void> {
+    private async updateChat(sql: string, params: any[]): Promise<void> {
+        const sqlUpper = sql.toUpperCase();
+
+        // UPDATE chats SET updated_at = ? WHERE id = ?
+        if (sqlUpper.includes('SET UPDATED_AT') && params.length === 2) {
+            const [updatedAt, id] = params;
+            const chat = await this.db!.get('chats', id);
+            if (chat) {
+                chat.updated_at = updatedAt;
+                await this.db!.put('chats', chat);
+            }
+        }
         // UPDATE chats SET title = ?, updated_at = ? WHERE id = ?
-        const [title, updatedAt, id] = params;
-        const chat = await this.db!.get('chats', id);
-        if (chat) {
-            chat.title = title;
-            chat.updated_at = updatedAt;
-            await this.db!.put('chats', chat);
+        else if (sqlUpper.includes('SET TITLE') && params.length === 3) {
+            const [title, updatedAt, id] = params;
+            const chat = await this.db!.get('chats', id);
+            if (chat) {
+                chat.title = title;
+                chat.updated_at = updatedAt;
+                await this.db!.put('chats', chat);
+            }
         }
     }
 
