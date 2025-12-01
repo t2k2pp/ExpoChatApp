@@ -15,6 +15,7 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { Button, Input } from '../components/common';
+import { SearXNGSettings } from '../components/settings';
 import { StorageService } from '../services';
 import { OpenAICompatibleConfig } from '../models';
 import { AIProviderFactory } from '../providers';
@@ -348,6 +349,8 @@ export const SettingsScreen: React.FC = () => {
                 placeholder="0.7"
                 keyboardType="decimal-pad"
             />
+
+            <SearXNGSettings />
 
             <View style={styles.buttonContainer}>
                 <Button
