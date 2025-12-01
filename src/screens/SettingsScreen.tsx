@@ -15,6 +15,7 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { Button, Input } from '../components/common';
+import { SearXNGSettings } from '../components/settings';
 import { StorageService } from '../services';
 import { OpenAICompatibleConfig, SearXNGConfig } from '../models';
 import { AIProviderFactory } from '../providers';
@@ -30,8 +31,6 @@ export const SettingsScreen: React.FC = () => {
     const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [loadingModels, setLoadingModels] = useState(false);
     const [showModelPicker, setShowModelPicker] = useState(false);
-    const [searxngEnabled, setSearxngEnabled] = useState(false);
-    const [searxngUrl, setSearxngUrl] = useState('http://192.168.1.24:8081');
     const storageService = StorageService.getInstance();
 
     useEffect(() => {
@@ -363,28 +362,7 @@ export const SettingsScreen: React.FC = () => {
                 keyboardType="decimal-pad"
             />
 
-            <Text style={styles.sectionTitle}>Web Search (SearXNG)</Text>
-
-            <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>Enable Web Search</Text>
-                <Switch
-                    value={searxngEnabled}
-                    onValueChange={setSearxngEnabled}
-                    trackColor={{ false: '#E0E0E0', true: '#007AFF' }}
-                    thumbColor={Platform.OS === 'android' ? '#FFF' : undefined}
-                />
-            </View>
-
-            {searxngEnabled && (
-                <Input
-                    label="SearXNG Instance URL"
-                    value={searxngUrl}
-                    onChangeText={setSearxngUrl}
-                    placeholder="http://192.168.1.24:8081"
-                    autoCapitalize="none"
-                    keyboardType="url"
-                />
-            )}
+            <SearXNGSettings />
 
             <View style={styles.buttonContainer}>
                 <Button
