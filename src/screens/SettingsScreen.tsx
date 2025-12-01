@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { Button, Input } from '../components/common';
 import { StorageService } from '../services';
-import { OpenAICompatibleConfig } from '../models';
+import { OpenAICompatibleConfig, SearXNGConfig } from '../models';
 import { AIProviderFactory } from '../providers';
 
 export const SettingsScreen: React.FC = () => {
@@ -30,6 +30,8 @@ export const SettingsScreen: React.FC = () => {
     const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [loadingModels, setLoadingModels] = useState(false);
     const [showModelPicker, setShowModelPicker] = useState(false);
+    const [searxngEnabled, setSearxngEnabled] = useState(false);
+    const [searxngUrl, setSearxngUrl] = useState('http://192.168.1.24:8081');
     const storageService = StorageService.getInstance();
 
     useEffect(() => {
@@ -75,6 +77,11 @@ export const SettingsScreen: React.FC = () => {
             }
 
             console.log('Settings loaded - baseUrl:', config.baseUrl);
+
+            // Load SearXNG config
+            const searxngConfig = await storageService.getSearXNGConfig();
+            setSearxngEnabled(searxngConfig.enabled);
+            setSearxngUrl(searxngConfig.baseUrl);
         } catch (error) {
             console.error('Failed to load settings:', error);
         }
@@ -118,6 +125,13 @@ export const SettingsScreen: React.FC = () => {
                 temperature: tempValue,
             };
             await storageService.saveProviderConfig(config);
+
+            // Save SearXNG config
+            const searxngConfig: SearXNGConfig = {
+                enabled: searxngEnabled,
+                baseUrl: searxngUrl.trim(),
+            };
+            await storageService.setSearXNGConfig(searxngConfig);
 
             console.log('Settings saved successfully:', config);
             setTestResult({ message: '✓ Settings saved successfully!', success: true });
@@ -349,6 +363,29 @@ export const SettingsScreen: React.FC = () => {
                 keyboardType="decimal-pad"
             />
 
+            <Text style={styles.sectionTitle}>Web Search (SearXNG)</Text>
+
+            <View style={styles.switchRow}>
+                <Text style={styles.switchLabel}>Enable Web Search</Text>
+                <Switch
+                    value={searxngEnabled}
+                    onValueChange={setSearxngEnabled}
+                    trackColor={{ false: '#E0E0E0', true: '#007AFF' }}
+                    thumbColor={Platform.OS === 'android' ? '#FFF' : undefined}
+                />
+            </View>
+
+            {searxngEnabled && (
+                <Input
+                    label="SearXNG Instance URL"
+                    value={searxngUrl}
+                    onChangeText={setSearxngUrl}
+                    placeholder="http://192.168.1.24:8081"
+                    autoCapitalize="none"
+                    keyboardType="url"
+                />
+            )}
+
             <View style={styles.buttonContainer}>
                 <Button
                     title="Test Connection"
@@ -508,6 +545,205 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     modelItemContent: {
+                        </View >
+                    </View >
+                )}
+            </View >
+
+            <Input
+                label="Temperature (0-2)"
+                value={temperature}
+                onChangeText={setTemperature}
+                placeholder="0.7"
+                keyboardType="decimal-pad"
+            />
+
+            <Text style={styles.sectionTitle}>Web Search (SearXNG)</Text>
+
+            <View style={styles.switchRow}>
+                <Text style={styles.switchLabel}>Enable Web Search</Text>
+                <Switch
+                    value={searxngEnabled}
+                    onValueChange={setSearxngEnabled}
+                    trackColor={{ false: '#E0E0E0', true: '#007AFF' }}
+                    thumbColor={Platform.OS === 'android' ? '#FFF' : undefined}
+                />
+            </View>
+
+{
+    searxngEnabled && (
+        <Input
+            label="SearXNG Instance URL"
+            value={searxngUrl}
+            onChangeText={setSearxngUrl}
+            placeholder="http://192.168.1.24:8081"
+            autoCapitalize="none"
+            keyboardType="url"
+        />
+    )
+}
+
+<View style={styles.buttonContainer}>
+    <Button
+        title="Test Connection"
+        onPress={handleTestConnection}
+        variant="secondary"
+        loading={loading}
+        style={styles.button}
+    />
+    <Button
+        title="Save Settings"
+        onPress={handleSave}
+        loading={loading}
+        style={styles.button}
+    />
+</View>
+
+{
+    testResult && (
+        <View style={[
+            styles.resultBox,
+            testResult.success ? styles.resultSuccess : styles.resultError
+        ]}>
+            <Text style={styles.resultText}>{testResult.message}</Text>
+        </View>
+    )
+}
+
+<View style={styles.infoContainer}>
+    <Text style={styles.infoTitle}>📖 Quick Setup Guide</Text>
+    <Text style={styles.infoText}>
+        • For Llama.cpp: http://localhost:8080/v1{'\n'}
+        • For Ollama: http://localhost:11434/v1{'\n'}
+        • For LM Studio: http://localhost:1234/v1{'\n'}
+        • For OpenAI: https://api.openai.com/v1
+    </Text>
+</View>
+        </ScrollView >
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#F8F8F8',
+    },
+    content: {
+        padding: 16,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#000',
+        marginTop: 16,
+        marginBottom: 12,
+    },
+    textArea: {
+        height: 100,
+        textAlignVertical: 'top',
+    },
+    buttonContainer: {
+        marginTop: 24,
+        gap: 12,
+    },
+    button: {
+        marginBottom: 8,
+    },
+    infoContainer: {
+        marginTop: 32,
+        padding: 16,
+        backgroundColor: '#FFF',
+        borderRadius: 8,
+        borderLeftWidth: 4,
+        borderLeftColor: '#007AFF',
+    },
+    infoTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 8,
+    },
+    infoText: {
+        fontSize: 14,
+        color: '#666',
+        lineHeight: 20,
+    },
+    resultBox: {
+        marginTop: 16,
+        padding: 12,
+        borderRadius: 8,
+        borderWidth: 2,
+    },
+    resultSuccess: {
+        backgroundColor: '#E8F5E9',
+        borderColor: '#4CAF50',
+    },
+    resultError: {
+        backgroundColor: '#FFEBEE',
+        borderColor: '#F44336',
+    },
+    resultText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#000',
+    },
+    modelSection: {
+        marginBottom: 16,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#000',
+        marginBottom: 8,
+    },
+    modelInputRow: {
+        flexDirection: 'row',
+        gap: 8,
+        alignItems: 'flex-start',
+    },
+    modelInput: {
+        flex: 1,
+    },
+    loadModelsButton: {
+        minWidth: 120,
+        marginTop: 0,
+    },
+    modelListContainer: {
+        marginTop: 12,
+        padding: 12,
+        backgroundColor: '#FFF',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#DDD',
+    },
+    modelListTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#666',
+        marginBottom: 8,
+    },
+    modelList: {
+        gap: 6,
+    },
+    modelItem: {
+        padding: 10,
+        backgroundColor: '#F5F5F5',
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    modelItemSelected: {
+        backgroundColor: '#E3F2FD',
+        borderColor: '#2196F3',
+    },
+    modelItemText: {
+        fontSize: 13,
+        color: '#333',
+    },
+    modelItemTextSelected: {
+        color: '#1976D2',
+        fontWeight: '600',
+    },
+    modelItemContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -517,5 +753,20 @@ const styles = StyleSheet.create({
         color: '#1976D2',
         fontWeight: 'bold',
         marginLeft: 8,
+    },
+    switchRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: '#FFF',
+        borderRadius: 8,
+        marginBottom: 16,
+    },
+    switchLabel: {
+        fontSize: 16,
+        color: '#333',
+        fontWeight: '500',
     },
 });
