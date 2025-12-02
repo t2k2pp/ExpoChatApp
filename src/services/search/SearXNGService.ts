@@ -55,8 +55,19 @@ export class SearXNGService {
             return 'No search results found.';
         }
 
-        return results
-            .map((r, i) => `[${i + 1}] ${r.title}\n${r.content}\nSource: ${r.url}`)
-            .join('\n\n');
+        const formatted = results.map((result, index) => {
+            const parts = [];
+            parts.push(`## 情報源 ${index + 1}`);
+            parts.push(`**タイトル**: ${result.title}`);
+            parts.push(`**内容**: ${result.content}`);
+            parts.push(`**URL**: ${result.url}`);
+            if (result.engine) {
+                parts.push(`**検索エンジン**: ${result.engine}`);
+            }
+            parts.push(''); // Empty line for separation
+            return parts.join('\n');
+        });
+
+        return formatted.join('\n');
     }
 }

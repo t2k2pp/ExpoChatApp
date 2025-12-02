@@ -185,7 +185,46 @@ If NO search needed, respond normally.`;
                             const searchContext = searxng.formatForContext(results);
 
                             // Phase 3: Generate final answer with search results
-                            const enhancedPrompt = systemPrompt + `\n\nSearch Results for "${searchQuery}":\n\n${searchContext}\n\nUse these search results to answer the user's question accurately.`;
+                            const enhancedPrompt = systemPrompt + `
+
+# Web検索結果を使用した回答生成
+
+あなたは情報統合の専門家です。以下のWeb検索結果を使用して、ユーザーの質問に正確に答えてください。
+
+## ユーザーの質問
+${userMessage.content}
+
+## Web検索クエリ
+${searchQuery}
+
+## 検索結果
+${searchContext}
+
+## 回答の要件
+1. すべての重要な情報を含める
+2. 各情報のソースを明記する
+3. 矛盾する情報がある場合は両方を提示
+4. 簡潔で分かりやすく説明
+5. 以下の形式で構造化して出力する
+
+## 出力形式
+### 要約
+[質問に対する簡潔な回答（2-3文）]
+
+### 詳細
+[詳細な説明。検索結果から得られた具体的な情報を含める]
+
+### 主要なポイント
+- ポイント1
+- ポイント2
+- ポイント3
+
+### 参照ソース
+- [タイトル1](URL1)
+- [タイトル2](URL2)
+
+上記のWeb検索結果を活用して、ユーザーの質問に構造化された回答を提供してください。
+`;
 
                             let fullResponse = '';
                             await this.aiProvider.sendMessageStream(
