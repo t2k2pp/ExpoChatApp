@@ -33,54 +33,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }
     };
 
-    const toggleWebSearch = () => {
-        setWebSearchEnabled(!webSearchEnabled);
-    };
-
-    return (
-        <View style={styles.container}>
-            <View style={styles.inputContainer}>
-                <TouchableOpacity
-                    style={styles.webSearchButton}
-                    onPress={toggleWebSearch}
-                    disabled={disabled}
+    onPress = { handleSend }
+    disabled = {!message.trim() || disabled
+}
                 >
-                    <Ionicons
-                        name="globe-outline"
-                        size={24}
-                        color={webSearchEnabled ? '#007AFF' : '#999'}
-                    />
-                </TouchableOpacity>
-
-                <TextInput
-                    style={styles.input}
-                    value={message}
-                    onChangeText={setMessage}
-                    placeholder={placeholder}
-                    placeholderTextColor="#999"
-                    multiline
-                    maxLength={2000}
-                    editable={!disabled}
-                    onSubmitEditing={handleSend}
-                    blurOnSubmit={false}
-                />
-
-                <TouchableOpacity
-                    style={[
-                        styles.sendButton,
-                        (!message.trim() || disabled) && styles.sendButtonDisabled,
-                    ]}
-                    onPress={handleSend}
-                    disabled={!message.trim() || disabled}
-                >
-                    <Ionicons
-                        name="send"
-                        size={20}
-                        color={message.trim() && !disabled ? '#007AFF' : '#CCC'}
-                    />
-                </TouchableOpacity>
-            </View>
-        </View>
+    <Ionicons
+        name="send"
+        size={20}
+        color={message.trim() && !disabled ? '#007AFF' : '#CCC'}
+    />
+                </TouchableOpacity >
+            </View >
+        </View >
     );
 };
 
@@ -89,32 +53,33 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#E5E5EA',
         backgroundColor: '#FFF',
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
         paddingHorizontal: 16,
         paddingVertical: 12,
     },
-    webSearchButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 8,
-    },
     input: {
-        flex: 1,
+        width: '100%',
+        minHeight: 44,
         maxHeight: 100,
         paddingHorizontal: 16,
-        paddingVertical: 10,
-        marginRight: 12,
+        paddingVertical: 12,
+        marginBottom: 12,
         borderWidth: 1,
         borderColor: '#E5E5EA',
         borderRadius: 20,
         fontSize: 16,
         backgroundColor: '#F8F8F8',
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    iconButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     sendButton: {
         width: 40,
