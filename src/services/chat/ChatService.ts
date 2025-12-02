@@ -169,23 +169,23 @@ If NO search needed, respond normally.`;
                     console.log('[ChatService] LLM decision response:', decisionResponse.substring(0, 200));
 
                     // Check if search is needed
-                    const needsSearch = /<\|search_needed\|>yes<\|\/search_needed\|>/.test(decisionResponse);
+                    const needsSearch = true; // TEMP FIX: LLMがタグを正しく生成できないため常に検索
                     console.log('[ChatService] Search needed?', needsSearch);
 
                     if (needsSearch) {
-                        const queryMatch = decisionResponse.match(/<\|search_query\|>(.*?)<\|\/search_query\|>/);
+                        //const queryMatch = decisionResponse.match(/<\|search_query\|>(.*?)<\|\/search_query\|>/);
 
-                        if (queryMatch && queryMatch[1]) {
-                            const searchQuery = queryMatch[1].trim();
-                            console.log('[ChatService] Performing web search:', searchQuery);
+                        //if (queryMatch && queryMatch[1]) {
+                        const searchQuery = userMessage.content; // ユーザーの質問をそのまま使用
+                        console.log('[ChatService] Performing web search:', searchQuery);
 
-                            // Phase 2: Perform search
-                            const searxng = new SearXNGService(searxngConfig.baseUrl);
-                            const results = await searxng.search(searchQuery, 5);
-                            const searchContext = searxng.formatForContext(results);
+                        // Phase 2: Perform search
+                        const searxng = new SearXNGService(searxngConfig.baseUrl);
+                        const results = await searxng.search(searchQuery, 5);
+                        const searchContext = searxng.formatForContext(results);
 
-                            // Phase 3: Generate final answer with search results
-                            const enhancedPrompt = systemPrompt + `
+                        // Phase 3: Generate final answer with search results
+                        const enhancedPrompt = systemPrompt + `
 
 # Web検索結果を使用した回答生成
 
@@ -226,24 +226,23 @@ ${searchContext}
 上記のWeb検索結果を活用して、ユーザーの質問に構造化された回答を提供してください。
 `;
 
-                            let fullResponse = '';
-                            await this.aiProvider.sendMessageStream(
-                                messages,
-                                enhancedPrompt,
-                                (token: string) => {
-                                    fullResponse += token;
-                                    onToken(token);
-                                }
-                            );
+                        let fullResponse = '';
+                        await this.aiProvider.sendMessageStream(
+                            messages,
+                            enhancedPrompt,
+                            (token: string) => {
+                                fullResponse += token;
+                                onToken(token);
+                            }
+                        );
 
-                            // Save and return
-                            const assistantMessage = this.createMessage({
-                                role: 'assistant',
-                                content: fullResponse,
-                            });
-                            await this.databaseService.saveMessage(chatId, assistantMessage);
-                            return assistantMessage;
-                        }
+                        // Save and return
+                        const assistantMessage = this.createMessage({
+                            role: 'assistant',
+                            content: fullResponse,
+                        });
+                        await this.databaseService.saveMessage(chatId, assistantMessage);
+                        return assistantMessage;
                     }
 
                     // If no search needed, use the decision response

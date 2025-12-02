@@ -32,6 +32,7 @@ export const SettingsScreen: React.FC = () => {
     const [loadingModels, setLoadingModels] = useState(false);
     const [showModelPicker, setShowModelPicker] = useState(false);
     const storageService = StorageService.getInstance();
+    const searxngRef = React.useRef<any>(null);
 
     useEffect(() => {
         loadSettings();
