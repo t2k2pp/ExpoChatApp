@@ -27,9 +27,20 @@ export const ChatListScreen: React.FC<ChatListScreenProps> = ({ navigation }) =>
 
     useEffect(() => {
         loadChats();
+        // Auto-create and navigate to new chat on app launch (Gemini/Claude/Perplexity pattern)
+        autoLaunchToChat();
         const unsubscribe = navigation.addListener('focus', loadChats);
         return unsubscribe;
     }, [navigation]);
+
+    const autoLaunchToChat = async () => {
+        try {
+            const newChat = await chatService.createChat({ title: 'New Chat' });
+            navigation.navigate('Chat', { chatId: newChat.id });
+        } catch (error) {
+            console.error('Failed to auto-create chat:', error);
+        }
+    };
 
     const loadChats = async () => {
         try {

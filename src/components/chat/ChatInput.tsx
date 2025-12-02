@@ -12,6 +12,7 @@ import {
     StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { FeatureSelectionModal } from './FeatureSelectionModal';
 
 interface ChatInputProps {
     onSend: (message: string, webSearchEnabled: boolean) => void;
@@ -36,6 +37,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
     const toggleWebSearch = () => {
         setWebSearchEnabled(!webSearchEnabled);
+    };
+
+    const [showFeatureModal, setShowFeatureModal] = useState(false);
+
+    const handleFeatureModalToggle = () => {
+        setShowFeatureModal(!showFeatureModal);
     };
 
     return (
@@ -63,27 +70,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     <Ionicons
                         name="add-circle-outline"
                         size={24}
-                        color={disabled ? '#CCC' : '#999'}
-                    />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={toggleWebSearch}
-                    disabled={disabled}
-                >
-                    <Ionicons
-                        name="globe-outline"
-                        size={24}
-                        color={webSearchEnabled ? '#007AFF' : (disabled ? '#CCC' : '#999')}
-                    />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.iconButton}
-                    disabled={disabled}
-                >
-                    <Ionicons
                         name="mic-outline"
                         size={24}
                         color={disabled ? '#CCC' : '#999'}
@@ -101,58 +87,46 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     disabled={!message.trim() || disabled}
                 >
                     <Ionicons
-                        name="send"
-                        size={20}
-                        color={message.trim() && !disabled ? '#007AFF' : '#CCC'}
-                    />
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        borderTopWidth: 1,
-        borderTopColor: '#E5E5EA',
-        backgroundColor: '#FFF',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+                        borderTopWidth: 1,
+                    borderTopColor: '#E5E5EA',
+                    backgroundColor: '#FFF',
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
     },
-    input: {
-        width: '100%',
-        minHeight: 44,
-        maxHeight: 100,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: '#E5E5EA',
-        borderRadius: 20,
-        fontSize: 16,
-        backgroundColor: '#F8F8F8',
+                    input: {
+                        width: '100%',
+                    minHeight: 44,
+                    maxHeight: 100,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderColor: '#E5E5EA',
+                    borderRadius: 20,
+                    fontSize: 16,
+                    backgroundColor: '#F8F8F8',
     },
-    buttonRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
+                    buttonRow: {
+                        flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
     },
-    iconButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
+                    iconButton: {
+                        width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
     },
-    sendButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#F0F0F0',
+                    sendButton: {
+                        width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#F0F0F0',
     },
-    sendButtonDisabled: {
-        opacity: 0.5,
+                    sendButtonDisabled: {
+                        opacity: 0.5,
     },
 });
