@@ -120,6 +120,11 @@ export const SettingsScreen: React.FC = () => {
             };
             await storageService.saveProviderConfig(config);
 
+            // Save SearXNG config via ref
+            if (searxngRef.current?.saveConfig) {
+                await searxngRef.current.saveConfig();
+            }
+
             console.log('Settings saved successfully:', config);
             setTestResult({ message: '✓ Settings saved successfully!', success: true });
             Alert.alert('Success', 'Settings saved successfully');
@@ -350,7 +355,7 @@ export const SettingsScreen: React.FC = () => {
                 keyboardType="decimal-pad"
             />
 
-            <SearXNGSettings />
+            <SearXNGSettings ref={searxngRef} />
 
             <View style={styles.buttonContainer}>
                 <Button

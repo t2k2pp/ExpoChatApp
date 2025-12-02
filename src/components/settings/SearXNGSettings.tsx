@@ -3,7 +3,7 @@
  * Manages SearXNG web search configuration
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import {
     View,
     Text,
@@ -14,7 +14,11 @@ import {
 import { Input } from '../common';
 import { StorageService } from '../../services';
 
-export const SearXNGSettings: React.FC = () => {
+export interface SearXNGSettingsRef {
+    saveConfig: () => Promise<void>;
+}
+
+export const SearXNGSettings = forwardRef<SearXNGSettingsRef>((props, ref) => {
     const [enabled, setEnabled] = useState(false);
     const [url, setUrl] = useState('http://192.168.1.24:8081');
     const storageService = StorageService.getInstance();
@@ -33,26 +37,23 @@ export const SearXNGSettings: React.FC = () => {
         }
     };
 
-    // Export save function to be called by parent
     const saveConfig = async () => {
         try {
             await storageService.setSearXNGConfig({
                 enabled,
                 baseUrl: url.trim(),
             });
+            console.log('[SearXNGSettings] Config saved:', { enabled, baseUrl: url.trim() });
         } catch (error) {
             console.error('Failed to save SearXNG config:', error);
             throw error;
         }
     };
 
-    // Expose save function to parent component
-    React.useEffect(() => {
-        (window as any).__searxngSaveConfig = saveConfig;
-        return () => {
-            delete (window as any).__searxngSaveConfig;
-        };
-    }, [enabled, url]);
+    // Expose saveConfig to parent via ref
+    useImperativeHandle(ref, () => ({
+        saveConfig,
+    }));
 
     return (
         <>
@@ -80,7 +81,7 @@ export const SearXNGSettings: React.FC = () => {
             )}
         </>
     );
-};
+});
 
 const styles = StyleSheet.create({
     sectionTitle: {
