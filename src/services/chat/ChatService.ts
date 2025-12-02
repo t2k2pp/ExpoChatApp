@@ -1,20 +1,20 @@
 /**
  * Chat Service
- * Manages chat conversations and AI interactions
+ * Orchestrates AI provider and database operations for chat functionality
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { Chat, CreateMessageDTO, Message } from '../../models';
+import { Message, CreateMessageDTO, Chat, CreateChatDTO } from '../../models';
+import { AIProvider } from '../../providers';
 import { DatabaseService } from '../database';
 import { StorageService } from '../storage';
-import { IAIProvider } from '../../providers';
 import { SearXNGService } from '../search';
 
 export class ChatService {
     private static instance: ChatService;
     private databaseService: DatabaseService;
     private storageService: StorageService;
-    private aiProvider: IAIProvider | null = null;
+    private aiProvider: AIProvider | null = null;
 
     private constructor() {
         this.databaseService = DatabaseService.getInstance();
@@ -32,32 +32,32 @@ export class ChatService {
         await this.databaseService.initDatabase();
     }
 
-    setAIProvider(provider: IAIProvider): void {
+    setAIProvider(provider: AIProvider): void {
         this.aiProvider = provider;
     }
 
-    async createChat(title: string = 'New Chat'): Promise<Chat> {
-        return await this.databaseService.createChat(title);
-    }
-
-    async getChat(id: number): Promise<Chat | null> {
-        return await this.databaseService.getChat(id);
+    async createChat(dto: CreateChatDTO): Promise<Chat> {
+        return await this.databaseService.createChat(dto);
     }
 
     async getAllChats(): Promise<Chat[]> {
         return await this.databaseService.getAllChats();
     }
 
-    async deleteChat(id: number): Promise<void> {
-        return await this.databaseService.deleteChat(id);
+    async getChat(chatId: number): Promise<Chat | null> {
+        const chat = await this.databaseService.getChat(chatId);
+        if (chat) {
+            chat.messages = await this.databaseService.getChatMessages(chatId);
+        }
+        return chat;
     }
 
-    async updateChatTitle(id: number, title: string): Promise<void> {
-        return await this.databaseService.updateChatTitle(id, title);
+    async updateChatTitle(chatId: number, title: string): Promise<void> {
+        await this.databaseService.updateChatTitle(chatId, title);
     }
 
-    async getChatMessages(chatId: number): Promise<Message[]> {
-        return await this.databaseService.getChatMessages(chatId);
+    async deleteChat(chatId: number): Promise<void> {
+        await this.databaseService.deleteChat(chatId);
     }
 
     async searchChats(query: string): Promise<Chat[]> {
@@ -119,13 +119,12 @@ export class ChatService {
         const message = this.createMessage(userMessage);
         await this.databaseService.saveMessage(chatId, message);
 
-        // Get chat history
+        // Get chat history and ensure new message is included
         const previousMessages = await this.databaseService.getChatMessages(chatId);
         const messages = previousMessages.some(m => m.id === message.id)
             ? previousMessages
             : [...previousMessages, message];
-
-        let systemPrompt = await this.storageService.getSystemPrompt();
+        const systemPrompt = await this.storageService.getSystemPrompt();
 
         console.log('[ChatService] Sending to LLM:', {
             messageCount: messages.length,
@@ -135,14 +134,17 @@ export class ChatService {
 
         // Web Search Integration (Agentic Approach)
         if (webSearchEnabled) {
+            console.log('[ChatService] Web search is ENABLED by user toggle');
             const searxngConfig = await this.storageService.getSearXNGConfig();
+            console.log('[ChatService] SearXNG config:', searxngConfig);
 
             if (searxngConfig.enabled) {
+                console.log('[ChatService] SearXNG is enabled in settings, starting search flow');
                 try {
                     // Phase 1: Ask LLM if search is needed
                     const searchDecisionPrompt = systemPrompt + `\n\nWeb Search Available: You can search the web for current information.
 
-IMPORTANT: If the user explicitly asks to search the web (e.g., "search for...", "look up online..."), you MUST use web search.
+IMPORTANT: If the user explicitly asks to search the web (e.g., "search for...", "look up online...", "今日のニュース"), you MUST use web search.
 
 Analyze the user's question and decide:
 1. Does this require current/real-time information?
@@ -150,8 +152,8 @@ Analyze the user's question and decide:
 3. Can you answer with your existing knowledge?
 
 If search is needed, respond ONLY with:
-<|search_needed|>yes<|/search_needed|>
-<|search_query|>your optimized search query here<|/search_query|>
+<|search_needed|>yes</|/search_needed|>
+<|search_query|>your optimized search query here</|/search_query|>
 
 If NO search needed, respond normally.`;
 
@@ -159,13 +161,16 @@ If NO search needed, respond normally.`;
                     await this.aiProvider.sendMessageStream(
                         messages,
                         searchDecisionPrompt,
-                        (token) => {
+                        (token: string) => {
                             decisionResponse += token;
                         }
                     );
 
+                    console.log('[ChatService] LLM decision response:', decisionResponse.substring(0, 200));
+
                     // Check if search is needed
                     const needsSearch = /<\|search_needed\|>yes<\|\/search_needed\|>/.test(decisionResponse);
+                    console.log('[ChatService] Search needed?', needsSearch);
 
                     if (needsSearch) {
                         const queryMatch = decisionResponse.match(/<\|search_query\|>(.*?)<\|\/search_query\|>/);
@@ -186,7 +191,7 @@ If NO search needed, respond normally.`;
                             await this.aiProvider.sendMessageStream(
                                 messages,
                                 enhancedPrompt,
-                                (token) => {
+                                (token: string) => {
                                     fullResponse += token;
                                     onToken(token);
                                 }
@@ -203,6 +208,7 @@ If NO search needed, respond normally.`;
                     }
 
                     // If no search needed, use the decision response
+                    console.log('[ChatService] No search needed, using LLM response directly');
                     onToken(decisionResponse);
                     const assistantMessage = this.createMessage({
                         role: 'assistant',
@@ -215,7 +221,11 @@ If NO search needed, respond normally.`;
                     console.error('[ChatService] Web search error:', searchError);
                     // Fall through to normal chat
                 }
+            } else {
+                console.log('[ChatService] SearXNG is DISABLED in settings, skipping search');
             }
+        } else {
+            console.log('[ChatService] Web search toggle is OFF');
         }
 
         // Normal chat flow (no web search)
@@ -223,7 +233,7 @@ If NO search needed, respond normally.`;
         await this.aiProvider.sendMessageStream(
             messages,
             systemPrompt,
-            (token) => {
+            (token: string) => {
                 fullResponse += token;
                 onToken(token);
             }
