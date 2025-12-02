@@ -1,6 +1,7 @@
 /**
  * Chat Input Component
  * Text input field with send button and web search toggle for chat messages
+ * Redesigned layout: text input on top (full width), buttons below
  */
 
 import React, { useState } from 'react';
@@ -33,18 +34,80 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }
     };
 
-    onPress = { handleSend }
-    disabled = {!message.trim() || disabled
-}
+    const toggleWebSearch = () => {
+        setWebSearchEnabled(!webSearchEnabled);
+    };
+
+    return (
+        <View style={styles.container}>
+            {/* Text Input - Top Row (Full Width) */}
+            <TextInput
+                style={styles.input}
+                value={message}
+                onChangeText={setMessage}
+                placeholder={placeholder}
+                placeholderTextColor="#999"
+                multiline
+                maxLength={2000}
+                editable={!disabled}
+                onSubmitEditing={handleSend}
+                blurOnSubmit={false}
+            />
+
+            {/* Buttons - Bottom Row */}
+            <View style={styles.buttonRow}>
+                <TouchableOpacity
+                    style={styles.iconButton}
+                    disabled={disabled}
                 >
-    <Ionicons
-        name="send"
-        size={20}
-        color={message.trim() && !disabled ? '#007AFF' : '#CCC'}
-    />
-                </TouchableOpacity >
-            </View >
-        </View >
+                    <Ionicons
+                        name="add-circle-outline"
+                        size={24}
+                        color={disabled ? '#CCC' : '#999'}
+                    />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={toggleWebSearch}
+                    disabled={disabled}
+                >
+                    <Ionicons
+                        name="globe-outline"
+                        size={24}
+                        color={webSearchEnabled ? '#007AFF' : (disabled ? '#CCC' : '#999')}
+                    />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.iconButton}
+                    disabled={disabled}
+                >
+                    <Ionicons
+                        name="mic-outline"
+                        size={24}
+                        color={disabled ? '#CCC' : '#999'}
+                    />
+                </TouchableOpacity>
+
+                <View style={{ flex: 1 }} />
+
+                <TouchableOpacity
+                    style={[
+                        styles.sendButton,
+                        (!message.trim() || disabled) && styles.sendButtonDisabled,
+                    ]}
+                    onPress={handleSend}
+                    disabled={!message.trim() || disabled}
+                >
+                    <Ionicons
+                        name="send"
+                        size={20}
+                        color={message.trim() && !disabled ? '#007AFF' : '#CCC'}
+                    />
+                </TouchableOpacity>
+            </View>
+        </View>
     );
 };
 
